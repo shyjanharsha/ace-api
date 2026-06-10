@@ -1,0 +1,26 @@
+:concurrency: 10
+:max_retries: 3
+:timeout: 25
+
+:queues:
+  - [critical, 4]
+  - [default, 2]
+  - [low, 1]
+
+:scheduler:
+  :schedule:
+    presence_cleanup:
+      cron: "*/5 * * * *"
+      class: PresenceCleanupJob
+      queue: low
+      description: "Mark stale presences as offline every 5 minutes"
+    invitation_expiry:
+      cron: "0 * * * *"
+      class: InvitationExpiryJob
+      queue: low
+      description: "Expire stale invitations every hour"
+    room_cleanup:
+      cron: "*/10 * * * *"
+      class: RoomCleanupJob
+      queue: low
+      description: "Clean up empty/cancelled rooms every 10 minutes"

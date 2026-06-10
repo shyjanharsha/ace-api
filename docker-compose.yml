@@ -1,0 +1,89 @@
+
+services:
+  # PostgreSQL
+  db:
+    image: postgres:15-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER:     kazhutha
+      POSTGRES_PASSWORD: acepassword
+      POSTGRES_DB:       kazhutha_kali_development
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kazhutha -d kazhutha_kali_development"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Redis
+  redis:
+    image: redis:7-alpine
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # Rails API
+  api:
+    build: .
+    command: bash -c "rm -f tmp/pids/server.pid && bundle exec rails db:create db:migrate && bundle exec rails server -b 0.0.0.0"
+    volumes:
+      - .:/rails
+      - bundle_cache:/usr/local/bundle
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      RAILS_ENV:            development
+      DATABASE_URL:         postgresql://kazhutha:acepassword@db:5432/kazhutha_kali_development
+      REDIS_URL:            redis://redis:6379/0
+      REDIS_CABLE_URL:      redis://redis:6379/2
+      REDIS_SIDEKIQ_URL:    redis://redis:6379/1
+      JWT_SECRET_KEY:       dev_jwt_secret_change_in_production_min_64_chars_long
+      JWT_REFRESH_SECRET:   dev_refresh_secret_change_in_production_min_64_chars
+      FCM_SERVER_KEY:       your_fcm_key
+      MSG91_AUTH_KEY:       your_msg91_key
+      MSG91_TEMPLATE_ID:    your_template_id
+      ALLOWED_ORIGINS:      "http://localhost:3001,http://localhost:3000"
+    env_file:
+      - .env
+
+  # Sidekiq worker
+  sidekiq:
+    build: .
+    command: bundle exec sidekiq -C config/sidekiq.yml
+    volumes:
+      - .:/rails
+      - bundle_cache:/usr/local/bundle
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      RAILS_ENV:         development
+      DATABASE_URL:      postgresql://kazhutha:acepassword@db:5432/kazhutha_kali_development
+      REDIS_URL:         redis://redis:6379/0
+      REDIS_SIDEKIQ_URL: redis://redis:6379/1
+      JWT_SECRET_KEY:    dev_jwt_secret_change_in_production_min_64_chars_long
+      JWT_REFRESH_SECRET: dev_refresh_secret_change_in_production_min_64_chars
+      FCM_SERVER_KEY:    your_fcm_key
+    env_file:
+      - .env
+
+volumes:
+  postgres_data:
+  redis_data:
+  bundle_cache:

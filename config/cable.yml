@@ -1,0 +1,12 @@
+development:
+  adapter: redis
+  url: <%= ENV.fetch("REDIS_CABLE_URL", "redis://localhost:6379/2") %>
+  channel_prefix: kazhutha_kali_development
+
+test:
+  adapter: test
+
+production:
+  adapter: redis
+  url: <%= ENV.fetch("REDIS_CABLE_URL") %>
+  channel_prefix: kazhutha_kali_production
