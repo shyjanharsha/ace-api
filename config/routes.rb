@@ -33,7 +33,7 @@ Rails.application.routes.draw do
       patch "users/me",          to: "users#update_me"
       get   "users/me/matches",  to: "users#matches", defaults: { id: "me" }
 
-      resources :users, only: [:show] do
+      resources :users, only: [:index, :show] do
         member do
           get :statistics
           get :matches

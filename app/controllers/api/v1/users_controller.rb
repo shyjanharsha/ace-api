@@ -3,6 +3,19 @@ module Api
     class UsersController < ApplicationController
       before_action :authenticate_user!
 
+      # GET /api/v1/users
+      def index
+        query = params[:query]
+        if query.present?
+          users = User.where("username LIKE ? OR display_name LIKE ?", "%#{query}%", "%#{query}%")
+                      .where.not(id: current_user.id)
+                      .limit(20)
+        else
+          users = User.where.not(id: current_user.id).limit(10)
+        end
+        render_success(users.map { |u| public_user_payload(u) })
+      end
+
       # GET /api/v1/users/me
       def me
         render_success(user_payload(current_user))

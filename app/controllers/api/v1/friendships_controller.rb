@@ -72,8 +72,18 @@ module Api
         {
           id:           f.id,
           status:       f.status,
-          requester:    { id: f.requester_id, username: f.requester.username },
-          receiver:     { id: f.receiver_id,  username: f.receiver.username },
+          requester:    {
+            id: f.requester_id,
+            username: f.requester.username,
+            display_name: f.requester.display_name,
+            avatar_url: f.requester.avatar_url
+          },
+          receiver:     {
+            id: f.receiver_id,
+            username: f.receiver.username,
+            display_name: f.receiver.display_name,
+            avatar_url: f.receiver.avatar_url
+          },
           created_at:   f.created_at.iso8601
         }
       end
