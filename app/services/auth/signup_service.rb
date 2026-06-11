@@ -11,14 +11,16 @@ module Auth
       validate_params!
       check_duplicates!
 
+      puts "Original password: #{@params[:password]}"
+
       user = User.new(
-        username:     @params[:username],
+        username: @params[:username],
         display_name: @params[:display_name] || @params[:username],
-        phone:        @params[:phone].presence,
-        email:        @params[:email].presence,
-        password:     @params[:password],
-        is_guest:     false,
-        verified:     false
+        phone: @params[:phone].presence,
+        email: @params[:email].presence,
+        password: @params[:password],
+        is_guest: false,
+        verified: false
       )
 
       unless user.save
@@ -37,23 +39,23 @@ module Auth
     private
 
     def validate_params!
-      @errors << "Username is required"  if @params[:username].blank?
-      @errors << "Password is required"  if @params[:password].blank?
-      @errors << "Password too short (min 6 chars)" if @params[:password].present? && @params[:password].length < 6
-      @errors << "Phone or email required" if @params[:phone].blank? && @params[:email].blank?
-      raise Errors::UnprocessableEntity, @errors.join(", ") if @errors.any?
+      @errors << 'Username is required'  if @params[:username].blank?
+      @errors << 'Password is required'  if @params[:password].blank?
+      @errors << 'Password too short (min 6 chars)' if @params[:password].present? && @params[:password].length < 6
+      # @errors << "Phone or email required" if @params[:phone].blank? && @params[:email].blank?
+      raise Errors::UnprocessableEntity, @errors.join(', ') if @errors.any?
     end
 
     def check_duplicates!
       if @params[:phone].present? && User.exists?(phone: @params[:phone])
-        raise Errors::UnprocessableEntity, "Phone number already registered"
+        raise Errors::UnprocessableEntity, 'Phone number already registered'
       end
       if @params[:email].present? && User.exists?(email: @params[:email])
-        raise Errors::UnprocessableEntity, "Email already registered"
+        raise Errors::UnprocessableEntity, 'Email already registered'
       end
-      if User.exists?(username: @params[:username])
-        raise Errors::UnprocessableEntity, "Username already taken"
-      end
+      return unless User.exists?(username: @params[:username])
+
+      raise Errors::UnprocessableEntity, 'Username already taken'
     end
   end
 end

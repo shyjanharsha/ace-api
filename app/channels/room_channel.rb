@@ -53,10 +53,19 @@ class RoomChannel < ApplicationCable::Channel
 
   # Inbound: player marks themselves ready
   def set_ready(data)
+    Rails.logger.info "\n\n=== SET_READY CALLED for User #{current_user&.id} ==="
+    Rails.logger.info "Room: #{@room&.id}, Data: #{data.inspect}"
+
     room_player = @room.room_players.find_by(user_id: current_user.id)
-    return unless room_player
+    
+    if room_player.nil?
+      Rails.logger.error "=== FAILED: RoomPlayer not found for User #{current_user.id} ==="
+      return 
+    end
 
     room_player.update!(ready: data["ready"])
+    Rails.logger.info "=== SUCCESS: Updated ready status to #{data["ready"]} ==="
+
     broadcast_to_room("player_ready", {
       user_id: current_user.id,
       ready:   data["ready"]
