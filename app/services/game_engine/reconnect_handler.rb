@@ -12,24 +12,38 @@ module GameEngine
       leading_suit = @state["leading_suit"]
       trick_pile   = @state["trick_pile"] || []
       is_my_turn   = @state["current_turn"].to_s == @user.id.to_s
+      
+      # Build a map of user_id -> card_count for all players
+      card_counts  = {}
+      @state["hands"]&.each do |pid, p_hand|
+        card_counts[pid] = p_hand.size
+      end
+
+      # Get player order
+      player_order = @match.match_players.order(:seat_position).pluck(:user_id)
 
       # Send private hand (only to this player's private stream)
+      payload = {
+        type: "reconnected_state",
+        data: {
+          hand:            hand,
+          hand_count:      hand.size,
+          leading_suit:    leading_suit,
+          trick_pile:      trick_pile,
+          is_my_turn:      is_my_turn,
+          current_trick:   @state["current_trick"],
+          active_players:  @state["active_players"],
+          move_seq:        @state["move_seq"],
+          timeout_seconds: @match.game_room.move_timeout,
+          card_counts:     card_counts,
+          player_order:    player_order,
+          current_turn:    @state["current_turn"]
+        }
+      }
+
       ActionCable.server.broadcast(
         "game_#{@match.id}_player_#{@user.id}",
-        {
-          type: "reconnected_state",
-          data: {
-            hand:            hand,
-            hand_count:      hand.size,
-            leading_suit:    leading_suit,
-            trick_pile:      trick_pile,
-            is_my_turn:      is_my_turn,
-            current_trick:   @state["current_trick"],
-            active_players:  @state["active_players"],
-            move_seq:        @state["move_seq"],
-            timeout_seconds: @match.game_room.move_timeout
-          }
-        }
+        payload
       )
 
       # Also send current game summary to public stream for UI sync

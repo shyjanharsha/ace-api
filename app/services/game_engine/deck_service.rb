@@ -2,8 +2,8 @@ module GameEngine
   # Builds and manages a standard 52-card deck
   class DeckService
     SUITS  = %w[spades hearts diamonds clubs].freeze
-    RANKS  = %w[2 3 4 5 6 7 8 9 10 J Q K A].freeze
-    VALUES = { "2"=>2,"3"=>3,"4"=>4,"5"=>5,"6"=>6,"7"=>7,"8"=>8,"9"=>9,"10"=>10,"J"=>11,"Q"=>12,"K"=>13,"A"=>14 }.freeze
+    RANKS  = %w[2 3 4 5 6 7 8 9 T J Q K A].freeze
+    VALUES = { "2"=>2,"3"=>3,"4"=>4,"5"=>5,"6"=>6,"7"=>7,"8"=>8,"9"=>9,"T"=>10,"J"=>11,"Q"=>12,"K"=>13,"A"=>14 }.freeze
 
     SUIT_CODES = { "spades" => "S", "hearts" => "H", "diamonds" => "D", "clubs" => "C" }.freeze
 
@@ -24,7 +24,6 @@ module GameEngine
 
     def self.card_value(code)
       rank = code[0..-2]  # all chars except last (suit)
-      rank = code[0..1] if code.length == 3  # handle "10S"
       VALUES[rank] || 0
     end
 

@@ -78,14 +78,15 @@ module Api
 
         @room.update!(status: 'playing')
 
-        # Broadcast game_started via room channel before dealing
+        # Deal cards and initialize game state in DB FIRST
+        GameEngine::DealService.new(match, player_ids).call
+
+        # THEN Broadcast game_started via room channel so clients subscribe
+        # When they subscribe, ReconnectHandler will serve the fully populated state
         ActionCable.server.broadcast("room_#{@room.id}", {
                                        type: 'game_started',
                                        data: { match_id: match.id }
                                      })
-
-        # Deal cards (async would be ideal but do it inline for correctness)
-        GameEngine::DealService.new(match, player_ids).call
 
         render_success({ match_id: match.id, message: 'Game started!' })
       end

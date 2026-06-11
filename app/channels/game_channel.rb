@@ -53,6 +53,10 @@ class GameChannel < ApplicationCable::Channel
     end
   end
 
+  def reconnect
+    GameEngine::ReconnectHandler.new(@match, current_user).restore!
+  end
+
   private
 
   def reconnect_if_needed
@@ -75,6 +79,10 @@ class GameChannel < ApplicationCable::Channel
       # New join — mark in_game
       rp&.update!(status: "active")
       current_user.user_presence&.mark_in_game!(@match.game_room_id)
+      
+      # Send the initial state anyway due to race conditions where
+      # the game start broadcast finishes before the client subscribes here.
+      GameEngine::ReconnectHandler.new(@match, current_user).restore!
     end
   end
 end

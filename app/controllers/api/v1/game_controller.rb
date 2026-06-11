@@ -31,7 +31,7 @@ module Api
       def set_match
         @match = Match.find(params[:match_id])
         raise Errors::NotFound, "Match not found" unless @match
-        raise Errors::UnprocessableEntity, "Match is not active" unless @match.status == "active"
+        raise Errors::UnprocessableEntity, "Match is not active" unless ["active", "playing"].include?(@match.status)
       end
     end
   end
